@@ -1,0 +1,419 @@
+using System;
+using System.Collections.Generic;
+
+public abstract class Persona
+{
+    public int Id { get; set; }
+    public string Nombre { get; set; }
+    public string Apellido { get; set; }
+    public string Correo { get; set; }
+
+    public virtual string MostrarInfo()
+    {
+        return $"{Nombre} {Apellido} - {Correo}";
+    }
+}
+
+public class Usuario : Persona
+{
+    public string Contraseña { get; set; }
+    public string TipoUsuario { get; set; }
+    public ICollection<Prestamo> Prestamos { get; set; }
+
+    public Usuario()
+    {
+        Prestamos = new List<Prestamo>();
+    }
+
+    public Usuario(int id, string nombre, string apellido, string correo, string contraseña, string tipoUsuario)
+    {
+        Id = id;
+        Nombre = nombre;
+        Apellido = apellido;
+        Correo = correo;
+        Contraseña = contraseña;
+        TipoUsuario = tipoUsuario;
+        Prestamos = new List<Prestamo>();
+    }
+
+    public void CambiarContraseña(string nuevaContraseña)
+    {
+        Contraseña = nuevaContraseña;
+    }
+
+    public bool EsBibliotecario()
+    {
+        return TipoUsuario == "Bibliotecario";
+    }
+
+    public void AgregarPrestamo(Prestamo prestamo)
+    {
+        Prestamos.Add(prestamo);
+    }
+
+    public void MostrarHistorialPrestamos()
+    {
+        Console.WriteLine($"Historial de prestamos de {Nombre}:");
+        foreach (var p in Prestamos)
+        {
+            Console.WriteLine($"{p.IdPrestamo} - {p.FechaPrestamo.ToShortDateString()}");
+        }
+    }
+
+    public override string MostrarInfo()
+    {
+        return $"Usuario: {Nombre} {Apellido} ({TipoUsuario})";
+    }
+}
+
+public class Bibliotecario : Usuario
+{
+    public void RegistrarLibro(Libro libro)
+    {
+        Console.WriteLine($"Libro {libro.Titulo} registrado por {Nombre}");
+    }
+
+    public override string MostrarInfo()
+    {
+        return $"Bibliotecario: {Nombre} {Apellido}";
+    }
+}
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
+namespace SistemaBiblioteca
+{
+    public class Libro
+    {
+        public int IdLibro { get; set; }
+        public string Titulo { get; set; }
+        public string Autor { get; set; }
+        public string Editorial { get; set; }
+        public string ISBN { get; set; }
+        public int AnioPublicacion { get; set; }
+        public int IdCategoria { get; set; }
+
+        public Libro()
+        {
+        }
+
+        public Libro(int idLibro, string titulo, string autor, string editorial, string isbn, int anioPublicacion, int idCategoria)
+        {
+            IdLibro = idLibro;
+            Titulo = titulo;
+            Autor = autor;
+            Editorial = editorial;
+            ISBN = isbn;
+            AnioPublicacion = anioPublicacion;
+            IdCategoria = idCategoria;
+        }
+
+        public void MostrarInfo()
+        {
+            Console.WriteLine($"[{IdLibro}] {Titulo} - {Autor} | Editorial: {Editorial} | ISBN: {ISBN} | Año: {AnioPublicacion} | Categoria ID: {IdCategoria}");
+        }
+
+        public void Actualizar(string titulo, string autor, string editorial, string isbn, int anioPublicacion, int idCategoria)
+        {
+            Titulo = titulo;
+            Autor = autor;
+            Editorial = editorial;
+            ISBN = isbn;
+            AnioPublicacion = anioPublicacion;
+            IdCategoria = idCategoria;
+        }
+    }
+
+    public class LibroRepository
+    {
+        private readonly List<Libro> _libros = new List<Libro>();
+
+        public void RegistrarLibro(Libro nuevoLibro)
+        {
+            _libros.Add(nuevoLibro);
+        }
+
+        public Libro ObtenerPorId(int idLibro)
+        {
+            return _libros.FirstOrDefault(l => l.IdLibro == idLibro);
+        }
+
+        public Libro ObtenerPorIsbn(string isbn)
+        {
+            return _libros.FirstOrDefault(l => l.ISBN == isbn);
+        }
+
+        public List<Libro> BuscarPorTituloOAutor(string criterio)
+        {
+            return _libros.Where(l => 
+                l.Titulo.Contains(criterio, StringComparison.OrdinalIgnoreCase) || 
+                l.Autor.Contains(criterio, StringComparison.OrdinalIgnoreCase)).ToList();
+        }
+
+        public List<Libro> ObtenerTodos()
+        {
+            return _libros;
+        }
+
+        public bool EliminarLibro(int idLibro)
+        {
+            var libro = _libros.FirstOrDefault(l => l.IdLibro == idLibro);
+            if (libro == null) return false;
+
+            _libros.Remove(libro);
+            return true;
+        }
+    }
+}
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
+namespace SistemaBiblioteca
+{
+    public class Ejemplar
+    {
+        public int IdEjemplar { get; set; }
+        public string CodigoBarras { get; set; }
+        public string Estado { get; set; }
+        public string Ubicacion { get; set; }
+        public int IdLibro { get; set; }
+
+        public Ejemplar()
+        {
+        }
+
+        public Ejemplar(int idEjemplar, string codigoBarras, string estado, string ubicacion, int idLibro)
+        {
+            IdEjemplar = idEjemplar;
+            CodigoBarras = codigoBarras;
+            Estado = estado;
+            Ubicacion = ubicacion;
+            IdLibro = idLibro;
+        }
+
+        public void MostrarInfo()
+        {
+            Console.WriteLine($"[{IdEjemplar}] Código: {CodigoBarras} | Estado: {Estado} | Ubicación: {Ubicacion} | Libro ID: {IdLibro}");
+        }
+
+        public void Actualizar(string codigoBarras, string estado, string ubicacion, int idLibro)
+        {
+            CodigoBarras = codigoBarras;
+            Estado = estado;
+            Ubicacion = ubicacion;
+            IdLibro = idLibro;
+        }
+
+        public void ActualizarEstado(string nuevoEstado)
+        {
+            Estado = nuevoEstado;
+        }
+    }
+
+    public class EjemplarRepository
+    {
+        private readonly List<Ejemplar> _ejemplares = new List<Ejemplar>();
+
+        public void RegistrarEjemplar(Ejemplar nuevoEjemplar)
+        {
+            _ejemplares.Add(nuevoEjemplar);
+        }
+
+        public bool ActualizarEstado(int idEjemplar, string nuevoEstado)
+        {
+            var ejemplar = _ejemplares.FirstOrDefault(e => e.IdEjemplar == idEjemplar);
+            if (ejemplar == null) return false;
+
+            ejemplar.ActualizarEstado(nuevoEstado);
+            return true;
+        }
+
+        public Ejemplar ObtenerPorCodigoBarras(string codigoBarras)
+        {
+            return _ejemplares.FirstOrDefault(e => e.CodigoBarras == codigoBarras);
+        }
+
+        public int ContarDisponibles(int idLibro)
+        {
+            return _ejemplares.Count(e => e.IdLibro == idLibro && e.Estado == "Disponible");
+        }
+
+        public List<Ejemplar> ObtenerTodos()
+        {
+            return _ejemplares;
+        }
+
+        public bool EliminarEjemplar(int idEjemplar)
+        {
+            var ejemplar = _ejemplares.FirstOrDefault(e => e.IdEjemplar == idEjemplar);
+            if (ejemplar == null) return false;
+
+            _ejemplares.Remove(ejemplar);
+            return true;
+        }
+    }
+
+    public class Program
+    {
+        public static void Main(string[] args)
+        {
+            EjemplarRepository repo = new EjemplarRepository();
+
+            repo.RegistrarEjemplar(new Ejemplar(1, "999001", "Disponible", "Estante A", 10));
+            repo.RegistrarEjemplar(new Ejemplar(2, "999002", "Disponible", "Estante B", 10));
+            repo.RegistrarEjemplar(new Ejemplar(3, "999003", "Prestado", "Estante A", 10));
+
+            int disponibles = repo.ContarDisponibles(10);
+            Console.WriteLine(disponibles);
+
+            var busqueda = repo.ObtenerPorCodigoBarras("999002");
+            busqueda?.MostrarInfo();
+
+            repo.ActualizarEstado(2, "Mantenimiento");
+            busqueda?.MostrarInfo();
+
+            repo.EliminarEjemplar(1);
+            Console.WriteLine(repo.ObtenerTodos().Count);
+        }
+    }
+}
+public class Prestamo
+{
+    // Atributos
+    public int IdPrestamo { get; set; }
+    public DateTime FechaPrestamo { get; set; }
+    public DateTime FechaLimite { get; set; }
+    public DateTime? FechaDevolucion { get; set; }
+    public int DiasMora { get; set; }
+
+    // Relaciones
+    public int IdUsuario { get; set; }
+    public Usuario Usuario { get; set; }
+    public int IdEjemplar { get; set; }
+    public Ejemplar Ejemplar { get; set; }
+
+    // Constructor con parámetros
+    public Prestamo(int idUsuario, int idEjemplar, int diasPrestamo = 7)
+    {
+        IdUsuario = idUsuario;
+        IdEjemplar = idEjemplar;
+        FechaPrestamo = DateTime.Now;
+        FechaLimite = FechaPrestamo.AddDays(diasPrestamo);
+        FechaDevolucion = null;
+        DiasMora = 0;
+    }
+
+    // Constructor vacío (sobrecarga, útil para Entity Framework)
+    public Prestamo() { }
+
+    // Método asociado a FechaLimite y FechaDevolucion/FechaPrestamo actual
+    public bool EstaVencido()
+    {
+        DateTime fechaComparar = FechaDevolucion ?? DateTime.Now;
+        return fechaComparar > FechaLimite;
+    }
+
+    // Método asociado a FechaDevolucion
+    public bool EstaActivo()
+    {
+        return FechaDevolucion == null;
+    }
+
+    // Método asociado a FechaLimite y DiasMora
+    public int CalcularDiasMora()
+    {
+        DateTime fechaComparar = FechaDevolucion ?? DateTime.Now;
+        int mora = (fechaComparar - FechaLimite).Days;
+        DiasMora = mora > 0 ? mora : 0;
+        return DiasMora;
+    }
+
+    // Método asociado a FechaPrestamo y FechaLimite
+    public void CalcularFechaLimite(int diasPrestamo)
+    {
+        FechaLimite = FechaPrestamo.AddDays(diasPrestamo);
+    }
+
+    // Método asociado a FechaDevolucion y DiasMora
+    public void RegistrarDevolucion()
+    {
+        FechaDevolucion = DateTime.Now;
+        CalcularDiasMora();
+    }
+
+    // Método que combina varios atributos para dar un resumen del estado
+    public string ObtenerEstado()
+    {
+        if (EstaActivo())
+        {
+            return EstaVencido() ? "Vencido" : "Activo";
+        }
+        return "Devuelto";
+    }
+}
+public class Categoria
+{
+    // Atributos
+    public int IdCategoria { get; set; }
+    public string Nombre { get; set; }
+    public string Descripcion { get; set; }
+
+    // Relaciones
+    public ICollection<Libro> Libros { get; set; }
+
+    // Constructor con parámetros
+    public Categoria(string nombre, string descripcion)
+    {
+        Nombre = nombre;
+        Descripcion = descripcion;
+        Libros = new List<Libro>();
+    }
+
+    // Constructor vacío (sobrecarga, útil para Entity Framework)
+    public Categoria()
+    {
+        Libros = new List<Libro>();
+    }
+
+    // Método asociado a Libros
+    public int ContarLibros()
+    {
+        return Libros?.Count ?? 0;
+    }
+
+    // Método asociado a Libros
+    public bool TieneLibros()
+    {
+        return Libros != null && Libros.Count > 0;
+    }
+
+    // Método asociado a Libros
+    public void AgregarLibro(Libro libro)
+    {
+        if (Libros == null)
+        {
+            Libros = new List<Libro>();
+        }
+        Libros.Add(libro);
+    }
+
+    // Método asociado a Libros
+    public bool QuitarLibro(Libro libro)
+    {
+        return Libros != null && Libros.Remove(libro);
+    }
+
+    // Método asociado a Nombre y Descripcion
+    public bool EsValida()
+    {
+        return !string.IsNullOrWhiteSpace(Nombre) && !string.IsNullOrWhiteSpace(Descripcion);
+    }
+
+    // Método que combina varios atributos para dar un resumen legible
+    public string ObtenerResumen()
+    {
+        return $"{Nombre}: {Descripcion} ({ContarLibros()} libro(s))";
+    }
+}
